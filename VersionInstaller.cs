@@ -1,5 +1,7 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,18 +14,25 @@ namespace WpfApp1
     internal async Task<bool> CheckRuntimeVersion()
     {
       var command = "dotnet --list-runtimes\r\n";
-      var dotnetRuntimeInfo = await ExecuteCommand(command);
-      Console.WriteLine(dotnetRuntimeInfo);
+      var dotnetRuntimeString = await ExecuteCommand(command);
+      string[] dotnetRuntimeInfo = dotnetRuntimeString.Split('\n');
 
-      if (dotnetRuntimeInfo.Contains("Microsoft.WindowsDesktop.App 8.0.1") && !versionFound)
-        versionFound = true;
+      Console.WriteLine(dotnetRuntimeString);
+
+      versionFound = dotnetRuntimeInfo.Any(line => line.Contains("Microsoft.WindowsDesktop.App 8.0"));
+
+      Console.WriteLine(versionFound
+                ? "Microsoft.WindowsDesktop.App 8.0 found!"
+                : "Microsoft.WindowsDesktop.App 8.0 not found.");
 
       return versionFound;
     }
 
+
     internal async Task Install()
     {
       var command = "winget install Microsoft.DotNet.DesktopRuntime.8";
+      Console.WriteLine(command);
       await ExecuteCommand(command);
     }
 
@@ -49,7 +58,7 @@ namespace WpfApp1
           process.OutputDataReceived += (s, eventData) =>
           {
             if (!string.IsNullOrEmpty(eventData.Data))
-              outputListRuntimes.AppendLine(eventData.Data);
+            outputListRuntimes.AppendLine(eventData.Data);
           };
 
           process.Start();
